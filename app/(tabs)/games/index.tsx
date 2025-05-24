@@ -1,5 +1,5 @@
-import { Link } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { Link, useFocusEffect } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
 import { Card, FAB, Text, useTheme } from 'react-native-paper';
 import { Game, storage } from '../../../utils/storage';
@@ -18,10 +18,6 @@ export default function GamesScreen() {
     const [games, setGames] = useState<Game[]>([]);
     const [error, setError] = useState('');
 
-    useEffect(() => {
-        loadGames();
-    }, []);
-
     const loadGames = async () => {
         try {
             const savedGames = await storage.getGames();
@@ -30,6 +26,13 @@ export default function GamesScreen() {
             setError('Failed to load games');
         }
     };
+
+    // Load games when screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            loadGames();
+        }, [])
+    );
 
     const ongoingGames = games.filter(game => !game.isEnded);
     const pastGames = games.filter(game => game.isEnded);
@@ -51,22 +54,27 @@ export default function GamesScreen() {
                                 <Card style={styles.card}>
                                     <Card.Content>
                                         <Text style={{ fontSize: 16, fontWeight: 'bold' }}>
-                                            {game.players.map((p, i) => (
-                                                <Text key={p.id}>
-                                                    {p.name}
-                                                    {game.players.length === 2 ? (
-                                                        i === 0 ? ' vs ' : ''
-                                                    ) : game.players.length === 3 ? (
-                                                        i === 0 ? ' vs ' : i === 1 ? ' vs ' : ''
-                                                    ) : (
-                                                        i === 0 ? ' & ' : i === 1 ? ' vs ' : i === 2 ? ' & ' : ''
-                                                    )}
-                                                </Text>
-                                            ))}
+                                            {game.players.length === 2 ? (
+                                                <>
+                                                    {game.players[0].name} vs {game.players[1].name}
+                                                </>
+                                            ) : game.players.length === 3 ? (
+                                                <>
+                                                    {game.players[0].name} vs {game.players[1].name} vs {game.players[2].name}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {game.players[0].name} & {game.players[2].name} vs {game.players[1].name} & {game.players[3].name}
+                                                </>
+                                            )}
                                         </Text>
                                         {game.scores.some(score => score > 0) && (
                                             <Text>
-                                                Scores: {game.scores.map(score => score || 0).join(' - ')}
+                                                Scores: {game.players.length === 4 ? (
+                                                    `${game.scores[0] + game.scores[2]} - ${game.scores[1] + game.scores[3]}`
+                                                ) : (
+                                                    game.scores.map(score => score || 0).join(' - ')
+                                                )}
                                             </Text>
                                         )}
                                     </Card.Content>
@@ -92,21 +100,26 @@ export default function GamesScreen() {
                                 <Card style={styles.card}>
                                     <Card.Content>
                                         <Text style={{ fontSize: 16, fontWeight: 'bold' }}>
-                                            {game.players.map((p, i) => (
-                                                <Text key={p.id}>
-                                                    {p.name}
-                                                    {game.players.length === 2 ? (
-                                                        i === 0 ? ' vs ' : ''
-                                                    ) : game.players.length === 3 ? (
-                                                        i === 0 ? ' vs ' : i === 1 ? ' vs ' : ''
-                                                    ) : (
-                                                        i === 0 ? ' & ' : i === 1 ? ' vs ' : i === 2 ? ' & ' : ''
-                                                    )}
-                                                </Text>
-                                            ))}
+                                            {game.players.length === 2 ? (
+                                                <>
+                                                    {game.players[0].name} vs {game.players[1].name}
+                                                </>
+                                            ) : game.players.length === 3 ? (
+                                                <>
+                                                    {game.players[0].name} vs {game.players[1].name} vs {game.players[2].name}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {game.players[0].name} & {game.players[2].name} vs {game.players[1].name} & {game.players[3].name}
+                                                </>
+                                            )}
                                         </Text>
                                         <Text>
-                                            Final Scores: {game.scores.map(score => score || 0).join(' - ')}
+                                            Final Scores: {game.players.length === 4 ? (
+                                                `${game.scores[0] + game.scores[2]} - ${game.scores[1] + game.scores[3]}`
+                                            ) : (
+                                                game.scores.map(score => score || 0).join(' - ')
+                                            )}
                                         </Text>
                                     </Card.Content>
                                 </Card>

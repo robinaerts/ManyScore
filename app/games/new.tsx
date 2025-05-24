@@ -101,7 +101,7 @@ export default function NewGameScreen() {
             };
 
             await storage.saveGame(game);
-            router.push(`/games/${game.id}`);
+            router.replace(`/games/${game.id}`);
         } catch (error) {
             setError('Failed to create game');
         }
@@ -133,9 +133,6 @@ export default function NewGameScreen() {
 
     return (
         <ScrollView style={styles.container}>
-            <View style={styles.titleContainer}>
-                <Text style={{ fontSize: 24, fontWeight: 'bold' }}>New Game</Text>
-            </View>
 
             <View style={styles.section}>
                 <View style={styles.sectionTitleContainer}>
@@ -146,6 +143,7 @@ export default function NewGameScreen() {
                     onValueChange={setGameType}
                     buttons={[
                         { value: 'manillen', label: 'Manillen' },
+                        { value: 'other', label: 'Other' },
                     ]}
                 />
             </View>

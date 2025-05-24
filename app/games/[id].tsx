@@ -16,13 +16,18 @@ interface Styles {
     titleContainer: ViewStyle;
     section: ViewStyle;
     sectionTitleContainer: ViewStyle;
+    sectionTitle: TextStyle;
     card: ViewStyle;
     pointsContainer: ViewStyle;
     teamPoints: ViewStyle;
     teamTitleContainer: ViewStyle;
+    teamTitle: TextStyle;
+    teamScore: TextStyle;
     roundContainer: ViewStyle;
     roundHeader: ViewStyle;
+    roundNumber: TextStyle;
     roundContent: ViewStyle;
+    roundText: TextStyle;
     buttonContainer: ViewStyle;
     button: ViewStyle;
     teamButton: ViewStyle;
@@ -30,11 +35,16 @@ interface Styles {
     input: ViewStyle;
     turnIndicator: TextStyle;
     scoreRow: ViewStyle;
+    playerInfo: ViewStyle;
     playerName: TextStyle;
     score: TextStyle;
-    pointsInputContainer: ViewStyle;
     pointsInput: TextStyle;
-    endButton: ViewStyle;
+    teamInputContainer: ViewStyle;
+    teamLabel: TextStyle;
+    playerNameContainer: ViewStyle;
+    teamPlayersContainer: ViewStyle;
+    teamPlayerRow: ViewStyle;
+    teamAnd: TextStyle;
 }
 
 export default function GameScreen() {
@@ -214,7 +224,7 @@ export default function GameScreen() {
             };
 
             await storage.saveGame(updatedGame);
-            router.push('/games');
+            router.replace('/games');
         } catch (error) {
             setError('Failed to end game');
         }
@@ -225,7 +235,7 @@ export default function GameScreen() {
 
         try {
             await storage.deleteGame(game.id);
-            router.push('/games');
+            router.replace('/games');
         } catch (error) {
             setError('Failed to delete game');
         }
@@ -292,69 +302,69 @@ export default function GameScreen() {
                 }}
             />
             <ScrollView style={styles.container}>
-                <View style={styles.titleContainer}>
-                    {game.isEnded && (
-                        <IconButton
-                            icon="delete"
-                            size={24}
-                            onPress={handleDeleteGame}
-                        />
-                    )}
-                </View>
 
                 <View style={styles.section}>
                     <View style={styles.sectionTitleContainer}>
-                        <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
-                            {game.isEnded ? 'Final Score' : 'Current Score'}
+                        <Text style={styles.sectionTitle}>
+                            {game.isEnded ? 'Final Score' : ''}
                         </Text>
                     </View>
                     <Card style={styles.card}>
                         <Card.Content>
                             {game.players.length === 3 ? (
                                 <>
-                                    <View style={styles.teamTitleContainer}>
-                                        <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 8 }}>Individual Scores</Text>
-                                    </View>
-                                    <View style={[styles.pointsContainer, { marginBottom: 16 }]}>
+                                    <View style={[styles.pointsContainer, { marginVertical: 16 }]}>
                                         {game.players.map((player, index) => (
                                             <View key={player.id} style={styles.scoreRow}>
-                                                <Text style={styles.playerName}>
-                                                    {player.name}
-                                                    {!game.isEnded && isPlayerTurn(index) && (
-                                                        <Text style={styles.turnIndicator}> TURN</Text>
-                                                    )}
-                                                </Text>
-                                                <Text style={styles.score}>{game.scores[index]}</Text>
+                                                <View style={styles.playerInfo}>
+                                                    <Text style={styles.playerName}>
+                                                        {player.name}
+                                                        {!game.isEnded && isPlayerTurn(index) && (
+                                                            <Text style={styles.turnIndicator}> TURN</Text>
+                                                        )}
+                                                    </Text>
+                                                    <Text style={[styles.score, { color: theme.colors.primary }]}>{game.scores[index]}</Text>
+                                                </View>
                                             </View>
                                         ))}
                                     </View>
                                     {!game.isEnded && (
                                         <View style={styles.teamTitleContainer}>
-                                            <Text style={{ fontSize: 16, fontWeight: 'bold', marginTop: 16, marginBottom: 8 }}>
-                                                Current Round Teams
-                                            </Text>
+                                            <Text style={styles.teamTitle}>Current Round Teams</Text>
                                             {(() => {
                                                 const { team1, team2 } = getThreePlayerTeams(currentRound);
                                                 return (
                                                     <>
-                                                        <View style={{ marginBottom: 16 }}>
-                                                            <Text style={{ marginBottom: 4 }}>{team1[0].name} (Solo)</Text>
+                                                        <View style={styles.teamInputContainer}>
+                                                            <Text style={styles.teamLabel}>{team1[0].name} (Solo)</Text>
                                                             <TextInput
                                                                 label="Points"
                                                                 value={rounds[currentRound - 1].team1Points}
                                                                 onChangeText={(text) => updatePoints(currentRound, 'team1Points', text)}
                                                                 keyboardType="numeric"
                                                                 style={styles.pointsInput}
+                                                                mode="outlined"
+                                                                onSubmitEditing={() => {
+                                                                    if (rounds[currentRound - 1].team1Points || rounds[currentRound - 1].team2Points) {
+                                                                        addRound();
+                                                                    }
+                                                                }}
                                                             />
                                                         </View>
-                                                        <View>
-                                                            <Text style={{ marginBottom: 4 }}>{team2[0].name} & {team2[1].name}</Text>
+                                                        <View style={styles.teamInputContainer}>
+                                                            <Text style={styles.teamLabel}>{team2[0].name} & {team2[1].name}</Text>
                                                             <TextInput
                                                                 label="Points"
                                                                 value={rounds[currentRound - 1].team2Points}
                                                                 onChangeText={(text) => updatePoints(currentRound, 'team2Points', text)}
                                                                 keyboardType="numeric"
                                                                 style={styles.pointsInput}
+                                                                mode="outlined"
+                                                                onSubmitEditing={() => {
+                                                                    if (rounds[currentRound - 1].team1Points || rounds[currentRound - 1].team2Points) {
+                                                                        addRound();
+                                                                    }
+                                                                }}
                                                             />
                                                         </View>
                                                     </>
@@ -367,26 +377,35 @@ export default function GameScreen() {
                                 <View style={styles.pointsContainer}>
                                     <View style={styles.teamPoints}>
                                         <View style={styles.teamTitleContainer}>
-                                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
+                                            <View style={styles.playerNameContainer}>
+                                                <Text style={styles.teamTitle}>
                                                     {game.players.length === 2 ? (
-                                                        game.players[0].name
-                                                    ) : (
                                                         <>
-                                                            <Text>{game.players[0].name}</Text>
+                                                            {game.players[0].name}
                                                             {!game.isEnded && isPlayerTurn(0) && (
                                                                 <Text style={styles.turnIndicator}> TURN</Text>
                                                             )}
-                                                            <Text> & </Text>
-                                                            <Text>{game.players[2].name}</Text>
-                                                            {!game.isEnded && isPlayerTurn(2) && (
-                                                                <Text style={styles.turnIndicator}> TURN</Text>
-                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Text style={styles.teamTitle}>
+                                                                {game.players[0].name}
+                                                                {!game.isEnded && isPlayerTurn(0) && (
+                                                                    <Text style={styles.turnIndicator}> TURN</Text>
+                                                                )}
+                                                            </Text>
+                                                            <Text style={styles.teamAnd}> & </Text>
+                                                            <Text style={styles.teamTitle}>
+                                                                {game.players[2].name}
+                                                                {!game.isEnded && isPlayerTurn(2) && (
+                                                                    <Text style={styles.turnIndicator}> TURN</Text>
+                                                                )}
+                                                            </Text>
                                                         </>
                                                     )}
                                                 </Text>
                                             </View>
-                                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.colors.primary }}>
+                                            <Text style={[styles.teamScore, { color: theme.colors.primary }]}>
                                                 {team1Score}
                                             </Text>
                                         </View>
@@ -397,31 +416,46 @@ export default function GameScreen() {
                                                 onChangeText={(text) => updatePoints(currentRound, 'team1Points', text)}
                                                 keyboardType="numeric"
                                                 style={styles.pointsInput}
+                                                mode="outlined"
+                                                onSubmitEditing={() => {
+                                                    if (rounds[currentRound - 1].team1Points || rounds[currentRound - 1].team2Points) {
+                                                        addRound();
+                                                    }
+                                                }}
                                             />
                                         )}
                                     </View>
                                     <View style={styles.teamPoints}>
                                         <View style={styles.teamTitleContainer}>
-                                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
+                                            <View style={styles.playerNameContainer}>
+                                                <Text style={styles.teamTitle}>
                                                     {game.players.length === 2 ? (
-                                                        game.players[1].name
-                                                    ) : (
                                                         <>
-                                                            <Text>{game.players[1].name}</Text>
+                                                            {game.players[1].name}
                                                             {!game.isEnded && isPlayerTurn(1) && (
                                                                 <Text style={styles.turnIndicator}> TURN</Text>
                                                             )}
-                                                            <Text> & </Text>
-                                                            <Text>{game.players[3].name}</Text>
-                                                            {!game.isEnded && isPlayerTurn(3) && (
-                                                                <Text style={styles.turnIndicator}> TURN</Text>
-                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Text style={styles.teamTitle}>
+                                                                {game.players[1].name}
+                                                                {!game.isEnded && isPlayerTurn(1) && (
+                                                                    <Text style={styles.turnIndicator}> TURN</Text>
+                                                                )}
+                                                            </Text>
+                                                            <Text style={styles.teamAnd}> & </Text>
+                                                            <Text style={styles.teamTitle}>
+                                                                {game.players[3].name}
+                                                                {!game.isEnded && isPlayerTurn(3) && (
+                                                                    <Text style={styles.turnIndicator}> TURN</Text>
+                                                                )}
+                                                            </Text>
                                                         </>
                                                     )}
                                                 </Text>
                                             </View>
-                                            <Text style={{ fontSize: 24, fontWeight: 'bold', color: theme.colors.primary }}>
+                                            <Text style={[styles.teamScore, { color: theme.colors.primary }]}>
                                                 {team2Score}
                                             </Text>
                                         </View>
@@ -432,6 +466,12 @@ export default function GameScreen() {
                                                 onChangeText={(text) => updatePoints(currentRound, 'team2Points', text)}
                                                 keyboardType="numeric"
                                                 style={styles.pointsInput}
+                                                mode="outlined"
+                                                onSubmitEditing={() => {
+                                                    if (rounds[currentRound - 1].team1Points || rounds[currentRound - 1].team2Points) {
+                                                        addRound();
+                                                    }
+                                                }}
                                             />
                                         )}
                                     </View>
@@ -449,7 +489,7 @@ export default function GameScreen() {
                             style={styles.button}
                             disabled={!rounds[currentRound - 1].team1Points && !rounds[currentRound - 1].team2Points}
                         >
-                            Add Round
+                            Add Score
                         </Button>
                         <Button
                             mode="outlined"
@@ -463,19 +503,19 @@ export default function GameScreen() {
 
                 <View style={styles.section}>
                     <View style={styles.sectionTitleContainer}>
-                        <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Round History</Text>
+                        <Text style={styles.sectionTitle}>Round History</Text>
                     </View>
                     {rounds.slice(0, -1).map((round, index) => (
                         <Card key={index} style={styles.card}>
                             <Card.Content>
                                 <View style={styles.roundContainer}>
                                     <View style={styles.roundHeader}>
-                                        <Text style={{ fontSize: 16, fontWeight: 'bold' }}>
+                                        <Text style={styles.roundNumber}>
                                             Round {index + 1}
                                         </Text>
                                     </View>
                                     <View style={styles.roundContent}>
-                                        <Text>
+                                        <Text style={styles.roundText}>
                                             {game.players.length === 2 ? (
                                                 round.scoringTeam === 1 ? (
                                                     game.players[0].name
@@ -514,6 +554,7 @@ const styles = StyleSheet.create<Styles>({
     container: {
         flex: 1,
         padding: 16,
+        backgroundColor: '#f5f5f5',
     },
     titleContainer: {
         flexDirection: 'row',
@@ -525,14 +566,23 @@ const styles = StyleSheet.create<Styles>({
         marginBottom: 24,
     },
     sectionTitleContainer: {
-        marginBottom: 8,
+        marginBottom: 12,
+        alignItems: 'center',
+    },
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#333',
     },
     card: {
-        marginBottom: 8,
+        marginBottom: 12,
+        borderRadius: 12,
     },
     pointsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        flexWrap: 'wrap',
     },
     teamPoints: {
         flex: 1,
@@ -540,7 +590,43 @@ const styles = StyleSheet.create<Styles>({
         alignItems: 'center',
     },
     teamTitleContainer: {
-        marginBottom: 8,
+        marginBottom: 12,
+        alignItems: 'center',
+        width: '100%',
+        minHeight: 80,
+    },
+    playerNameContainer: {
+        minHeight: 24,
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+    },
+    teamPlayersContainer: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    teamPlayerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 24,
+    },
+    teamAnd: {
+        marginHorizontal: 8,
+        color: '#333',
+        fontWeight: 'bold',
+    },
+    teamTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+        textAlign: 'center',
+    },
+    teamScore: {
+        fontSize: 32,
+        fontWeight: 'bold',
+        marginTop: 8,
+        textAlign: 'center',
     },
     roundContainer: {
         flexDirection: 'column',
@@ -548,8 +634,17 @@ const styles = StyleSheet.create<Styles>({
     roundHeader: {
         marginBottom: 8,
     },
+    roundNumber: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+    },
     roundContent: {
         marginLeft: 8,
+    },
+    roundText: {
+        fontSize: 14,
+        color: '#666',
     },
     buttonContainer: {
         flexDirection: 'row',
@@ -560,6 +655,7 @@ const styles = StyleSheet.create<Styles>({
     button: {
         flex: 1,
         marginHorizontal: 8,
+        borderRadius: 8,
     },
     teamButton: {
         marginBottom: 8,
@@ -573,31 +669,43 @@ const styles = StyleSheet.create<Styles>({
     turnIndicator: {
         color: '#6200ee',
         fontSize: 14,
+        fontWeight: 'bold',
+        marginLeft: 4,
     },
     scoreRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
+        flex: 1,
+        minWidth: '33%',
+        marginBottom: 12,
+        paddingHorizontal: 8,
+    },
+    playerInfo: {
         alignItems: 'center',
-        marginBottom: 8,
     },
     playerName: {
         fontSize: 16,
         fontWeight: 'bold',
+        color: '#333',
+        textAlign: 'center',
+        marginBottom: 4,
     },
     score: {
-        fontSize: 16,
-    },
-    pointsInputContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 16,
+        fontSize: 24,
+        fontWeight: 'bold',
     },
     pointsInput: {
         flex: 1,
         marginHorizontal: 4,
+        backgroundColor: 'white',
+        height: 50,
     },
-    endButton: {
-        marginTop: 16,
-        marginBottom: 32,
+    teamInputContainer: {
+        marginBottom: 16,
+        width: '100%',
+    },
+    teamLabel: {
+        fontSize: 14,
+        color: '#666',
+        marginBottom: 4,
+        textAlign: 'center',
     },
 }); 

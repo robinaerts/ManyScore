@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
 import { BarChart, LineChart } from 'react-native-chart-kit';
 import { Card, Text, useTheme } from 'react-native-paper';
@@ -18,6 +19,22 @@ export default function StatsScreen() {
     const [games, setGames] = useState<Game[]>([]);
     const [players, setPlayers] = useState<Player[]>([]);
     const [error, setError] = useState('');
+
+    const loadGames = async () => {
+        try {
+            const savedGames = await storage.getGames();
+            setGames(savedGames);
+        } catch (error) {
+            setError('Failed to load games');
+        }
+    };
+
+    // Load games when screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            loadGames();
+        }, [])
+    );
 
     useEffect(() => {
         loadData();
@@ -69,6 +86,12 @@ export default function StatsScreen() {
             .filter(game => game.players.some(p => p.id === playerId))
             .map(game => {
                 const playerIndex = game.players.findIndex(p => p.id === playerId);
+                if (game.players.length === 4) {
+                    // For 4 players, return the team score
+                    const team1Score = game.scores[0] + game.scores[2];
+                    const team2Score = game.scores[1] + game.scores[3];
+                    return playerIndex % 2 === 0 ? team1Score : team2Score;
+                }
                 return game.scores[playerIndex] || 0;
             });
     };
